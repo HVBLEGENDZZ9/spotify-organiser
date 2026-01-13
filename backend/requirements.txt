@@ -26,3 +26,5 @@ gunicorn>=21.2.0
 # Background Jobs
 apscheduler>=3.10.4
 
+tenacity
+

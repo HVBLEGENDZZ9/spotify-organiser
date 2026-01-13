@@ -551,7 +551,7 @@ async def get_process_status(
 
 # ============== Health & Info ==============
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 @limiter.limit("60/minute")
 async def health_check(request: Request):
     """Health check endpoint with system metrics."""

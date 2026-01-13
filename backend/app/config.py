@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Spotify OAuth
     spotify_client_id: str = ""
     spotify_client_secret: str = ""
-    spotify_redirect_uri: str = "http://127.0.0.1:8000/auth/spotify/callback"
+    spotify_redirect_uri: str = "https://weaponised-levi-protector.onrender.com/auth/spotify/callback"
     
     # Gemini AI
     gemini_api_key: str = ""
@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     
     # App Settings
     secret_key: str = "development-secret-key-change-in-production"
-    frontend_url: str = "http://localhost:5173"
-    backend_url: str = "http://127.0.0.1:8000"
+    frontend_url: str = "https://spotify-organiser.vercel.app/"
+    backend_url: str = "https://weaponised-levi-protector.onrender.com"
     
     # Processing Limits
     max_liked_songs: int = 1000

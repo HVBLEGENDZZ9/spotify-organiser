@@ -348,9 +348,10 @@ IMPORTANT:
         # Common mappings
         mappings = {
             "pop": "Pop",
-            "dance": "Dance",
-            "edm": "Dance",
-            "electronic": "Dance",
+            "dance": "Party",
+            "edm": "Party",
+            "electronic": "Party",
+            "party": "Party",
             "hip hop": "Hip-Hop",
             "hiphop": "Hip-Hop",
             "rap": "Hip-Hop",
@@ -362,7 +363,6 @@ IMPORTANT:
             "indie": "Indie",
             "alternative indie": "Indie",
             "bollywood party": "Bollywood Party",
-            "party": "Bollywood Party",
             "item song": "Bollywood Party",
             "desi indie": "Desi Indie",
             "indian indie": "Desi Indie",
@@ -373,6 +373,13 @@ IMPORTANT:
             "bollywood romantic": "Bollywood Romantic",
             "bollywood": "Bollywood Romantic",
             "filmi": "Bollywood Romantic",
+            "desi hip-hop": "Desi Hip-Hop",
+            "desi rap": "Desi Hip-Hop",
+            "indian rap": "Desi Hip-Hop",
+            "soul": "Soul",
+            "r&b": "Soul",
+            "rnb": "Soul",
+            "jazz": "Jazz",
         }
         
         for key, value in mappings.items():
@@ -550,7 +557,7 @@ IMPORTANT:
             elif any(ind in artist_lower for ind in rock_indicators):
                 genre = "Rock"
             elif any(ind in artist_lower for ind in dance_indicators):
-                genre = "Dance"
+                genre = "Party"
             elif any(ind in artist_lower for ind in bollywood_romantic_indicators):
                 genre = "Bollywood Romantic"
             else:

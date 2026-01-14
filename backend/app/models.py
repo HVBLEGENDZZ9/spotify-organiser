@@ -12,7 +12,7 @@ class GenreName(str, Enum):
     """
     
     POP = "Pop"
-    DANCE = "Dance"
+    PARTY = "Party"
     HIPHOP = "Hip-Hop"
     ROCK = "Rock"
     ROMANTIC = "Romantic"

@@ -304,6 +304,7 @@ const Dashboard = ({
   subscription,
   userLimit,
   showLimitMessage,
+  showCooldownMessage,
   onActivate,
   onLinkSpotify, 
   onTriggerScan,
@@ -363,6 +364,22 @@ const Dashboard = ({
             >
               <AlertIcon />
               <span>Maximum user limit reached. We'll notify you when more spots open up!</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Rate Limit Cooldown Message */}
+        <AnimatePresence>
+          {showCooldownMessage && (
+            <motion.div 
+              className="limit-toast cooldown-toast"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AlertIcon />
+              <span>Slow down! You're scanning too fast. Please wait before trying again.</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -881,6 +898,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLimitMessage, setShowLimitMessage] = useState(false);
+  const [showCooldownMessage, setShowCooldownMessage] = useState(false);
   const [scanCooldown, setScanCooldown] = useState(0);
 
   // Cooldown timer
@@ -1114,6 +1132,8 @@ function App() {
       
       if (err.status === 429) {
         setScanCooldown(Math.ceil(err.retryAfter || 60));
+        setShowCooldownMessage(true);
+        setTimeout(() => setShowCooldownMessage(false), 5000);
         // Stay on dashboard, let the button show the timer
         return;
       }
@@ -1173,6 +1193,7 @@ function App() {
             subscription={subscription}
             userLimit={userLimit}
             showLimitMessage={showLimitMessage}
+            showCooldownMessage={showCooldownMessage}
             onActivate={handleActivate}
             onLinkSpotify={handleLinkSpotify}
             onTriggerScan={handleTriggerScan}
@@ -1185,6 +1206,7 @@ function App() {
             scanCooldown={scanCooldown}
           />
         )}
+
         
         {currentPage === 'processing' && (
           <StatusPage 

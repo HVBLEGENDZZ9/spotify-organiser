@@ -807,6 +807,13 @@ a:focus-visible {
   flex-shrink: 0;
 }
 
+/* Cooldown Toast (Rate Limit) - Orange variant */
+.cooldown-toast {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.08));
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: #f97316;
+}
+
 /* Limit Warning Text */
 .limit-warning {
   color: rgba(251, 191, 36, 0.9) !important;

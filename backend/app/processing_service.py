@@ -372,11 +372,19 @@ class ProcessingService:
             all_user_playlists = await self.spotify.get_user_playlists(access_token)
             
             # Map existing playlists by name (only if owned by current user)
+            # Use lowercase keys for case-insensitive matching
             existing_playlists_map = {
-                p['name']: p for p in all_user_playlists 
+                p['name'].lower(): p for p in all_user_playlists 
                 if p.get('owner', {}).get('id') == spotify_user_id
             }
             logger.info(f"Loaded {len(existing_playlists_map)} existing playlists for user")
+            
+            # Debug: Log all existing playlist names for troubleshooting
+            if existing_playlists_map:
+                logger.debug(f"Existing playlist names (lowercase): {list(existing_playlists_map.keys())}")
+            
+            # Debug: Log target playlist names we're looking for
+            logger.debug(f"Target playlist names: {list(playlist_assignments_final.keys())}")
             
             playlist_mapping: Dict[str, str] = {}  # playlist name -> playlist id
             total_playlists = len(playlist_assignments_final)
@@ -386,10 +394,11 @@ class ProcessingService:
             
             for playlist_name in playlist_assignments_final.keys():
                 try:
-                    # Check if playlist already exists in our pre-fetched map
-                    if playlist_name in existing_playlists_map:
-                        playlist = existing_playlists_map[playlist_name]
-                        logger.info(f"Reusing existing playlist: {playlist_name} ({playlist.get('id')})")
+                    # Check if playlist already exists in our pre-fetched map (case-insensitive)
+                    playlist_name_lower = playlist_name.lower()
+                    if playlist_name_lower in existing_playlists_map:
+                        playlist = existing_playlists_map[playlist_name_lower]
+                        logger.info(f"Reusing existing playlist: {playlist.get('name')} ({playlist.get('id')})")
                     else:
                         # Create new playlist
                         logger.info(f"Creating new playlist: {playlist_name}")
@@ -401,7 +410,7 @@ class ProcessingService:
                             public=False
                         )
                         # Add to map so we don't create it again if referenced twice (unlikely but safe)
-                        existing_playlists_map[playlist_name] = playlist
+                        existing_playlists_map[playlist_name_lower] = playlist
                         
                     playlist_id = playlist.get("id")
                     playlist_mapping[playlist_name] = playlist_id

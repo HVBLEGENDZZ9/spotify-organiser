@@ -328,11 +328,14 @@ class SpotifyService:
             )
             
             if response.status_code != 200:
+                logger.warning(f"Failed to fetch playlists: {response.status_code} - {response.text}")
                 break
             
             data = response.json()
             items = data.get("items", [])
             playlists.extend(items)
+            
+            logger.debug(f"Fetched {len(items)} playlists (offset={offset}, total so far={len(playlists)})")
             
             if len(items) < 50:
                 break
@@ -340,7 +343,9 @@ class SpotifyService:
             
             await asyncio.sleep(0.1)
         
+        logger.info(f"Total playlists fetched: {len(playlists)}")
         return playlists
+
     
     async def find_playlist_by_name(
         self, 

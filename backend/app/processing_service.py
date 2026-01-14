@@ -362,22 +362,28 @@ class ProcessingService:
             state.status = ProcessingStatus.CREATING_PLAYLISTS
             state.message = "Checking existing playlists..."
             state.progress = 0.60
-            
             # Get user info for playlist creation
             user_info = await self.spotify.get_current_user(access_token)
             spotify_user_id = user_info.get("id")
+            logger.debug(f"Current user's Spotify ID: {spotify_user_id}")
             
             # OPTIMIZATION: Fetch all user playlists ONCE to avoid repeated searches
             # This prevents creating duplicates if the playlist already exists
             all_user_playlists = await self.spotify.get_user_playlists(access_token)
+            logger.debug(f"Total playlists in user's library: {len(all_user_playlists)}")
             
+            # Debug: Log all playlists with their owners
+            for p in all_user_playlists:  # First 10 for debugging
+                owner_id = p.get('owner', {}).get('id', 'UNKNOWN')
+                logger.debug(f"  Playlist: '{p.get('name')}' | Owner: {owner_id} | Match: {owner_id == spotify_user_id}")
+
             # Map existing playlists by name (only if owned by current user)
             # Use lowercase keys for case-insensitive matching
             existing_playlists_map = {
                 p['name'].lower(): p for p in all_user_playlists 
                 if p.get('owner', {}).get('id') == spotify_user_id
             }
-            logger.info(f"Loaded {len(existing_playlists_map)} existing playlists for user")
+            logger.info(f"Loaded {len(existing_playlists_map)} OWNED playlists for user (out of {len(all_user_playlists)} total)")
             
             # Debug: Log all existing playlist names for troubleshooting
             if existing_playlists_map:
@@ -391,7 +397,7 @@ class ProcessingService:
             created_count = 0
             
             state.message = "Preparing playlists..."
-            
+
             for playlist_name in playlist_assignments_final.keys():
                 try:
                     # Check if playlist already exists in our pre-fetched map (case-insensitive)
@@ -407,7 +413,7 @@ class ProcessingService:
                             spotify_user_id,
                             playlist_name,
                             description=f"Auto-organized by Spotify Housekeeping",
-                            public=False
+                            public=True, 
                         )
                         # Add to map so we don't create it again if referenced twice (unlikely but safe)
                         existing_playlists_map[playlist_name_lower] = playlist

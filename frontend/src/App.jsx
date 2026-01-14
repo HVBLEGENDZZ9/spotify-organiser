@@ -911,9 +911,29 @@ function App() {
     }
   }, [scanCooldown]);
 
-  // API helper function
+  // API helper function with authentication wait
   const apiCall = useCallback(async (endpoint, options = {}) => {
-    const token = await getIdToken();
+    // Wait for authentication token (retry up to 10 times with 1s delay)
+    let token = null;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (!token && attempts < maxAttempts) {
+      token = await getIdToken();
+      if (!token) {
+        attempts++;
+        // Wait 1 second before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    // If still no token after all retries, throw error
+    if (!token) {
+      const error = new Error('Not authenticated after waiting');
+      error.status = 401;
+      throw error;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -933,6 +953,8 @@ function App() {
     
     return response.json();
   }, []);
+
+
 
   // Fetch subscription status
   const fetchSubscription = useCallback(async () => {

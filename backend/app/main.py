@@ -16,7 +16,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded

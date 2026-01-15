@@ -10,7 +10,7 @@ A smart, AI-powered application that automatically organizes your Spotify "Liked
 - **Subscription Model**: Simple "Free Tier" system (limited to 24 users) with Firebase Auth.
 - **Secure Architecture**: OAuth 2.0 with state verification, secure token storage, and strict CORS policies.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Backend**: Python (FastAPI), Google Gemini AI, Spotify Web API
 - **Frontend**: React, Tailwind CSS, Vite
@@ -24,7 +24,7 @@ A smart, AI-powered application that automatically organizes your Spotify "Liked
 - `rate_limiter.py`: Custom sliding window rate limiter implementation.
 - `scheduler_service.py`: Manages background jobs for daily playlist updates.
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Backend Setup
 

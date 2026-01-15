@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Spotify OAuth
     spotify_client_id: str = ""
     spotify_client_secret: str = ""
-    spotify_redirect_uri: str = "https://weaponised-levi-protector.onrender.com/auth/spotify/callback"
+    spotify_redirect_uri: str = ""
     
     # Gemini AI
     gemini_api_key: str = ""
@@ -31,9 +31,19 @@ class Settings(BaseSettings):
     ses_from_name: str = "Spotify Organizer"
     
     # App Settings
+    # NOTE: secret_key MUST be changed in production
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
     secret_key: str = "development-secret-key-change-in-production"
-    frontend_url: str = "https://spotify-organiser.vercel.app/"
-    backend_url: str = "https://weaponised-levi-protector.onrender.com"
+    frontend_url: str = ""
+    backend_url: str = ""
+    
+    def validate_production_secret(self) -> bool:
+        """Validate that production is not using the default secret key."""
+        if "development" in self.secret_key.lower():
+            return False
+        if len(self.secret_key) < 32:
+            return False
+        return True
     
     # Processing Limits
     max_liked_songs: int = 1000

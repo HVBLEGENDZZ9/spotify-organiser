@@ -147,9 +147,9 @@ IMPORTANT:
         try:
             prompt = self._build_language_detection_prompt(tracks)
             
-            # Call Gemini REST API
+            # Call Gemini REST API with API key in header (not URL)
             response = await self.client.post(
-                f"{GEMINI_API_URL}?key={self.api_key}",
+                GEMINI_API_URL,
                 json={
                     "contents": [{
                         "parts": [{"text": prompt}]
@@ -159,7 +159,10 @@ IMPORTANT:
                         "maxOutputTokens": 4096,
                     }
                 },
-                headers={"Content-Type": "application/json"}
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key  # API key in header, not URL
+                }
             )
             
             if response.status_code != 200:
@@ -253,9 +256,9 @@ IMPORTANT:
         try:
             prompt = self._build_artist_genre_prompt(artists)
             
-            # Call Gemini REST API
+            # Call Gemini REST API with API key in header (not URL)
             response = await self.client.post(
-                f"{GEMINI_API_URL}?key={self.api_key}",
+                GEMINI_API_URL,
                 json={
                     "contents": [{
                         "parts": [{"text": prompt}]
@@ -265,7 +268,10 @@ IMPORTANT:
                         "maxOutputTokens": 4096,
                     }
                 },
-                headers={"Content-Type": "application/json"}
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key  # API key in header, not URL
+                }
             )
             
             if response.status_code != 200:

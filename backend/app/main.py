@@ -20,7 +20,7 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from .config import get_settings
 from .models import StatusResponse
@@ -46,8 +46,8 @@ spotify_service: Optional[SpotifyService] = None
 processing_service: Optional[ProcessingService] = None
 scheduler_service: Optional[SchedulerService] = None
 
-# Temporary state storage for OAuth flow
-state_storage: dict = {}
+# OAuth state is now stored in Firestore (see firebase_service.py)
+# This provides persistence across restarts and horizontal scaling
 
 
 # ============== Request/Response Models ==============
@@ -55,6 +55,15 @@ state_storage: dict = {}
 class GoogleAuthRequest(BaseModel):
     """Request to verify Google/Firebase ID token."""
     id_token: str
+    
+    @validator('id_token')
+    def validate_token_format(cls, v):
+        """Validate token length and basic JWT format."""
+        if not v or len(v) < 100 or len(v) > 5000:
+            raise ValueError('Invalid token length')
+        if v.count('.') != 2:
+            raise ValueError('Invalid token format')
+        return v
 
 
 class GoogleAuthResponse(BaseModel):
@@ -121,13 +130,23 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_custom_handler)
     
-    # CORS
+    # CORS - Restricted to required methods and headers
+    # Note: Remove localhost origins in production
+    allowed_origins = [
+        settings.frontend_url,
+        "https://spotify-organiser.web.app",
+        "https://spotify-organiser.firebaseapp.com"
+    ]
+    # Add localhost origins only if frontend_url indicates development
+    if "localhost" in settings.frontend_url or "127.0.0.1" in settings.frontend_url:
+        allowed_origins.extend(["http://localhost:5173", "http://127.0.0.1:5173"])
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url, "http://localhost:5173", "http://127.0.0.1:5173", "https://spotify-organiser.web.app", "https://spotify-organiser.firebaseapp.com"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
     )
     
     return app
@@ -149,6 +168,23 @@ def rate_limit_custom_handler(request: Request, exc: RateLimitExceeded):
 
 
 app = create_app()
+
+
+# ============== Security Middleware ==============
+
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next):
+    """
+    Limit request body size to prevent large payload attacks.
+    Maximum size: 1MB
+    """
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 1_000_000:  # 1MB limit
+        return JSONResponse(
+            status_code=413,
+            content={"error": "Request too large", "detail": "Maximum request size is 1MB"}
+        )
+    return await call_next(request)
 
 
 # ============== Dependencies ==============
@@ -188,7 +224,8 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
         user['uid'] = decoded['uid']
         return user
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        logger.warning(f"Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 async def require_subscription(current_user: dict = Depends(get_current_user)) -> dict:
@@ -238,7 +275,8 @@ async def auth_google(request: Request, body: GoogleAuthRequest):
         )
         
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        logger.warning(f"Google auth failed: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 # ============== Spotify Linking Endpoints ==============
@@ -255,12 +293,13 @@ async def spotify_login(
     
     User must be authenticated with Firebase first.
     """
+    firebase = get_firebase_service()
+    
     # Generate secure state with user ID
     state = f"{current_user['uid']}:{secrets.token_urlsafe(32)}"
-    state_storage[state] = {
-        'uid': current_user['uid'],
-        'created_at': datetime.now(timezone.utc)
-    }
+    
+    # Store state in Firestore with 10-minute TTL
+    await firebase.store_oauth_state(state, current_user['uid'], ttl_minutes=10)
     
     auth_url = spotify.generate_auth_url(state)
     
@@ -291,14 +330,16 @@ async def spotify_callback(
             url=f"{settings.frontend_url}?spotify_error=missing_params"
         )
     
-    # Validate state
-    if state not in state_storage:
-        logger.error(f"Invalid state in Spotify callback")
+    # Validate state from Firestore (includes TTL check)
+    firebase = get_firebase_service()
+    state_data = await firebase.get_and_delete_oauth_state(state)
+    
+    if not state_data:
+        logger.error("Invalid or expired state in Spotify callback")
         return RedirectResponse(
             url=f"{settings.frontend_url}?spotify_error=invalid_state"
         )
     
-    state_data = state_storage.pop(state)
     firebase_uid = state_data['uid']
     
     try:
@@ -554,7 +595,23 @@ async def get_process_status(
 @app.api_route("/health", methods=["GET", "HEAD"])
 @limiter.limit("60/minute")
 async def health_check(request: Request):
-    """Health check endpoint with system metrics."""
+    """Basic health check endpoint - public."""
+    return {
+        "status": "healthy",
+        "version": "2.0.0"
+    }
+
+
+@app.get("/health/detailed")
+@limiter.limit("10/minute")
+async def health_check_detailed(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Detailed health check with system metrics - requires authentication.
+    Visible only to authenticated users for debugging.
+    """
     rate_limiter = get_spotify_rate_limiter()
     scheduler = get_scheduler_service()
     
@@ -566,14 +623,7 @@ async def health_check(request: Request):
     }
 
 
-# Metrics endpoints - Protected or removed for production
-# Uncomment and add auth dependency if needed for internal monitoring
-# @app.get("/metrics/rate-limiter")
-# async def get_rate_limiter_metrics(current_user: dict = Depends(get_current_user)):
-#     """Get detailed rate limiter metrics for monitoring."""
-#     if current_user.get('email') not in ["admin@example.com"]: # Replace with admin check
-#          raise HTTPException(status_code=403)
-#     rate_limiter = get_spotify_rate_limiter()
+# Metrics endpoints - now moved to /health/detailed above
 #     return rate_limiter.get_stats()
 
 # @app.get("/metrics/jobs")

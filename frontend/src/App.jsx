@@ -88,6 +88,20 @@ const LogoutIcon = () => (
   </svg>
 );
 
+const LockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+    <polyline points="22,6 12,13 2,6"/>
+  </svg>
+);
+
 const LinkIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -213,12 +227,13 @@ const LandingPage = ({ onGoogleSignIn, isLoading }) => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="hero-title">
-            <span className="hero-title-line white-text">Organize Your</span>
+            <span className="hero-title-line white-text">Housekeeper for your</span>
             <span className="hero-title-line gradient-text">Music Library</span>
           </h1>
           <p className="hero-subtitle">
-            AI-powered playlist curation that transforms your <strong>Liked Songs</strong> into 
-            perfectly organized genre-based collections. <em>Automatic daily updates.</em>
+            AI-powered playlist housekeeper that transforms your <strong>Liked Songs</strong> into 
+            perfectly organized genre-based collections. <em>Automatic daily updates.</em> Contact 
+             <a href="mailto:harshvardhanbhosale9@gmail.com"> harshvardhanbhosale9@gmail.com</a> for access.
           </p>
         </motion.div>
 
@@ -241,7 +256,7 @@ const LandingPage = ({ onGoogleSignIn, isLoading }) => {
             <li><CheckIcon /> Automatic daily organization</li>
             <li><CheckIcon /> AI-powered genre classification</li>
             <li><CheckIcon /> Multi-language support</li>
-            <li><CheckIcon /> Limited to 24 users</li>
+            <li><CheckIcon /> Limited to 25 users</li>
           </ul>
         </motion.div>
 
@@ -786,6 +801,120 @@ const ErrorPage = ({ error, onRetry }) => {
 };
 
 // ============================================
+// ACCESS DENIED PAGE - For Spotify Dev Mode
+// ============================================
+
+const AccessDeniedPage = ({ onBack }) => {
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('harshvardhanbhosale9@gmail.com');
+  };
+
+  return (
+    <motion.div 
+      className="status-page access-denied-page"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="access-denied-container">
+        <motion.div 
+          className="access-denied-icon"
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", duration: 0.8, bounce: 0.4 }}
+        >
+          <div className="access-denied-icon-glow" />
+          <LockIcon />
+        </motion.div>
+
+        <motion.h1 
+          className="access-denied-title"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          Access Required
+        </motion.h1>
+
+        <motion.p 
+          className="access-denied-subtitle"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          You are not authorised to use this application.
+        </motion.p>
+
+        <motion.div 
+          className="access-denied-card"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <div className="access-denied-card-header">
+            <MailIcon />
+            <span>Request Access</span>
+          </div>
+          <p className="access-denied-card-text">
+            This app is currently in development mode with limited access. 
+            To get access, please send an email with your Spotify account email address.
+          </p>
+          <a 
+            href="mailto:harshvardhanbhosale9@gmail.com?subject=Spotify%20Organizer%20Access%20Request&body=Hi%2C%0A%0AI%20would%20like%20to%20request%20access%20to%20the%20Spotify%20Organizer%20app.%0A%0AMy%20Spotify%20email%3A%20%5BPlease%20add%20your%20Spotify%20email%20here%5D%0A%0AThank%20you!"
+            className="btn btn-primary access-denied-email-btn"
+          >
+            <MailIcon />
+            harshvardhanbhosale9@gmail.com
+          </a>
+          <button 
+            className="btn-copy"
+            onClick={handleCopyEmail}
+          >
+            Click to copy email
+          </button>
+        </motion.div>
+
+        <motion.div 
+          className="access-denied-info"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <div className="access-denied-info-item">
+            <ShieldIcon />
+            <div>
+              <h4>Why is this needed?</h4>
+              <p>Spotify requires app developers to manually approve users during the development phase.</p>
+            </div>
+          </div>
+          <div className="access-denied-info-item">
+            <HeartIcon />
+            <div>
+              <h4>Limited spots available</h4>
+              <p>Only 25 users can be granted access. Request your spot today!</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.button
+          className="btn btn-ghost access-denied-back-btn"
+          onClick={onBack}
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <ArrowLeftIcon />
+          Back to Home
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
@@ -833,15 +962,16 @@ const AboutPage = ({ onBack }) => (
       
       <div className="about-section">
         <h2>What is this?</h2>
-        <p>Spotify Organizer is an AI-powered tool that automatically categorizes your liked songs into genre-based playlists. We use advanced AI (Gemini) to analyze artist genres and group your music intelligently.</p>
+        <p>Spotify Organizer is an AI-powered tool that automatically categorizes your liked songs into genre-based playlists. 
+          We use advanced AI combined with heuristic algorithms to analyze artist genres and group your music intelligently. Best part, we will scan your playlist once in every 24 hours!</p>
       </div>
 
       <div className="about-section">
         <h2>How it works</h2>
         <ul>
           <li><strong>Connect:</strong> Link your Spotify account securely.</li>
-          <li><strong>Scan:</strong> We scan your liked songs (not the audio files, just metadata).</li>
-          <li><strong>Classify:</strong> AI determines the genre for each artist.</li>
+          <li><strong>Periodic Scan:</strong> We scan your liked songs (not the audio files, just metadata) once in every 24 hours.</li>
+          <li><strong>Classify:</strong> AI combined with classification algorithms determines the genre for each artist.</li>
           <li><strong>Organize:</strong> Songs are added to playlists like "Pop", "Hip Hop", "Soul", etc.</li>
         </ul>
       </div>
@@ -852,7 +982,7 @@ const AboutPage = ({ onBack }) => (
       </div>
       
       <div className="about-footer">
-        <p>Made with Love for Tana</p>
+        <p>Made with Love for my girlfriend Tana</p>
       </div>
     </div>
   </motion.div>
@@ -998,7 +1128,9 @@ function App() {
       if (firebaseUser) {
         setUser(firebaseUser);
         await Promise.all([fetchSubscription(), fetchUserLimit()]);
-        setCurrentPage('dashboard');
+        // Don't redirect to dashboard if we're on the access denied page
+        // The user needs to stay there until they manually navigate away
+        setCurrentPage(prev => prev === 'access_denied' ? 'access_denied' : 'dashboard');
       } else {
         setUser(null);
         setSubscription(null);
@@ -1022,8 +1154,9 @@ function App() {
       window.history.replaceState({}, '', '/');
       fetchSubscription();
     } else if (spotifyError) {
-      setError(`Spotify connection failed: ${spotifyError}`);
-      setCurrentPage('error');
+      // Route to access denied page for Spotify authorization errors
+      // This happens when the user is not added to the Spotify app in dev mode
+      setCurrentPage('access_denied');
       window.history.replaceState({}, '', '/');
     }
   }, [fetchSubscription]);
@@ -1256,6 +1389,19 @@ function App() {
           />
         )}
 
+        {currentPage === 'access_denied' && (
+          <AccessDeniedPage 
+            key="access_denied"
+            onBack={() => {
+              if (user) {
+                setCurrentPage('dashboard');
+              } else {
+                setCurrentPage('landing');
+              }
+            }} 
+          />
+        )}
+
         {currentPage === 'about' && (
           <AboutPage 
             key="about"
@@ -1264,7 +1410,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {currentPage !== 'about' && currentPage !== 'loading' && (
+      {currentPage !== 'about' && currentPage !== 'loading' && currentPage !== 'access_denied' && (
         <Footer onAboutClick={() => setCurrentPage('about')} />
       )}
     </div>

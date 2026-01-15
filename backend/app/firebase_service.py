@@ -468,6 +468,111 @@ class FirebaseService:
             logger.error(f"Failed to delete account: {e}")
             return False
     
+    # ============== OAuth State Management (Security) ==============
+    
+    async def store_oauth_state(self, state: str, uid: str, ttl_minutes: int = 10) -> bool:
+        """
+        Store OAuth state in Firestore with TTL.
+        
+        Args:
+            state: The OAuth state token
+            uid: Firebase user ID
+            ttl_minutes: Time-to-live in minutes (default 10)
+            
+        Returns:
+            True if successful
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            expires_at = datetime.fromtimestamp(
+                now.timestamp() + (ttl_minutes * 60),
+                tz=timezone.utc
+            )
+            
+            state_data = {
+                'uid': uid,
+                'created_at': now,
+                'expires_at': expires_at
+            }
+            
+            self.db.collection('oauth_states').document(state).set(state_data)
+            logger.info(f"Stored OAuth state for user {uid[:8]}***")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to store OAuth state: {e}")
+            return False
+    
+    async def get_and_delete_oauth_state(self, state: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve and delete OAuth state from Firestore.
+        
+        Validates TTL and removes expired states.
+        
+        Args:
+            state: The OAuth state token
+            
+        Returns:
+            State data dict with 'uid' if valid, None if not found or expired
+        """
+        try:
+            doc_ref = self.db.collection('oauth_states').document(state)
+            doc = doc_ref.get()
+            
+            if not doc.exists:
+                logger.warning("OAuth state not found")
+                return None
+            
+            state_data = doc.to_dict()
+            
+            # Always delete the state (one-time use)
+            doc_ref.delete()
+            
+            # Check TTL
+            expires_at = state_data.get('expires_at')
+            if expires_at:
+                now = datetime.now(timezone.utc)
+                # Handle Firestore timestamp
+                if hasattr(expires_at, 'timestamp'):
+                    expires_timestamp = expires_at.timestamp()
+                else:
+                    expires_timestamp = expires_at.timestamp() if isinstance(expires_at, datetime) else 0
+                    
+                if now.timestamp() > expires_timestamp:
+                    logger.warning("OAuth state expired")
+                    return None
+            
+            logger.info(f"Retrieved OAuth state for user {state_data.get('uid', '')[:8]}***")
+            return state_data
+            
+        except Exception as e:
+            logger.error(f"Failed to retrieve OAuth state: {e}")
+            return None
+    
+    async def cleanup_expired_oauth_states(self) -> int:
+        """
+        Remove expired OAuth states from Firestore.
+        
+        Should be called periodically by scheduler.
+        
+        Returns:
+            Number of states cleaned up
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            expired_query = self.db.collection('oauth_states').where('expires_at', '<', now)
+            expired_docs = list(expired_query.stream())
+            
+            for doc in expired_docs:
+                doc.reference.delete()
+            
+            if expired_docs:
+                logger.info(f"Cleaned up {len(expired_docs)} expired OAuth states")
+            
+            return len(expired_docs)
+        except Exception as e:
+            logger.error(f"Failed to cleanup OAuth states: {e}")
+            return 0
+
     # ============== Incremental Scanning ==============
     
     async def get_last_fetch_timestamp(self, firebase_uid: str) -> Optional[str]:
